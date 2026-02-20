@@ -1,0 +1,14 @@
+# LiteX build outputs
+build/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Firmware binaries
+firmware/*.elf
+firmware/*.bin
+
+# LiteX pythondata (large, cloned separately)
+pythondata-*/
