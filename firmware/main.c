@@ -85,17 +85,6 @@ int main(void) {
         unsigned char m, s, t;
         read_lap(lap_count - 1, &m, &s, &t);
 
-        /*
-         * Tại đây bạn có thể:
-         *   - Ghi m/s/t ra GPIO → điều khiển 7-seg hoặc LED
-         *   - Ghi ra UART (nếu có litex UART):
-         *       printf("Lap %d: %02d:%02d.%02d\n", lap_count, m, s, t);
-         *
-         * Ví dụ điều khiển 7-seg qua seg_gpio (nếu đã add_csr("seg_gpio")):
-         *   seg_gpio_out_write(encode_7seg(s));   // hiển thị giây
-         */
-
-        /* Nếu đã đủ MAX_LAPS lap → dừng đồng hồ */
         if (lap_count >= MAX_LAPS) {
             stopwatch_stop_write(1);
             stopwatch_stop_write(0);
