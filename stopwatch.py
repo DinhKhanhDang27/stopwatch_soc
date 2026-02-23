@@ -17,8 +17,26 @@ class Stopwatch(Module, AutoCSR):
         self.seconds = CSRStatus(8, name="seconds")  # giây (0–59)
         self.ticks   = CSRStatus(8, name="ticks")    # tích-tắc (0–99)
 
+        # ── Hardware button inputs (active-high, driven from SoC top-level) ──
+        # Dùng thay vì drive .storage trực tiếp để tránh multiple-driver error
+        self.hw_start = Signal()   # KEY[1] đã đảo cực (active-high)
+        self.hw_pause = Signal()   # KEY[2] đã đảo cực
+        self.hw_reset = Signal()   # KEY[3] đã đảo cực
+
         # ── Internal signals ──────────────────────────────────────────────────
         running = Signal()
+
+        # Combined control: CSR write OR hardware button press
+        do_start = Signal()
+        do_pause = Signal()
+        do_stop  = Signal()
+        do_reset = Signal()
+        self.comb += [
+            do_start.eq(self.start.storage | self.hw_start),
+            do_pause.eq(self.pause.storage | self.hw_pause),
+            do_stop .eq(self.stop.storage),
+            do_reset.eq(self.reset.storage | self.hw_reset),
+        ]
 
         # Số chu kỳ clock cho 1 tick (= 0.01 giây)
         clk_per_tick = max(1, int(sys_clk_freq // 100))
@@ -30,7 +48,7 @@ class Stopwatch(Module, AutoCSR):
 
         # ── Sequential logic ─────────────────────────────────────────────────
         self.sync += [
-            If(self.reset.storage,
+            If(do_reset,
                 # reset ưu tiên tuyệt đối — dừng & xoá tất cả
                 running.eq(0),
                 clk_count.eq(0),
@@ -39,11 +57,11 @@ class Stopwatch(Module, AutoCSR):
                 mins_cnt.eq(0),
             ).Else(
                 # điều khiển start / pause / stop
-                If(self.start.storage,
+                If(do_start,
                     running.eq(1)
-                ).Elif(self.pause.storage,
+                ).Elif(do_pause,
                     running.eq(0)   # đóng băng, giữ nguyên thời gian
-                ).Elif(self.stop.storage,
+                ).Elif(do_stop,
                     running.eq(0)
                 ),
 
